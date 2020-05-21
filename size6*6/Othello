@@ -1,0 +1,536 @@
+'左上のセルの位置
+Const top As Integer = 3
+Const left As Integer = 3
+'置く石の数
+Public stone_count As Integer
+'置く石の色
+Const stone As String = "●"
+Const BLACK_Color As Integer = 1
+Const WHITE_Color As Integer = 2
+
+Sub start_button_Click()
+    MsgBox "ゲームスタート"
+    
+    '変数を定義
+    Dim center_row As Integer
+    Dim center_column As Integer
+    
+    '手数の初期化
+    stone_count = 1
+    turn (stone_count)
+    Cells(4, 11).Value = stone
+    Cells(5, 11).Value = 2
+    Cells(6, 11).Value = 2
+    
+    '真ん中4マスの左上のセルの位置を計算
+    center_row = top + 2
+    center_column = left + 2
+    
+    '盤の石を全てクリア
+    For i = 0 To 5
+        For j = 0 To 5
+            Cells(top + i, left + j).Value = ""
+        Next
+    Next
+    
+    
+    '初期配置
+    Cells(center_row, center_column).Value = stone
+    Cells(center_row, center_column).Font.ColorIndex = 1
+    Cells(center_row, center_column + 1).Value = stone
+    Cells(center_row, center_column + 1).Font.ColorIndex = 2
+    Cells(center_row + 1, center_column).Value = stone
+    Cells(center_row + 1, center_column).Font.ColorIndex = 2
+    Cells(center_row + 1, center_column + 1).Value = stone
+    Cells(center_row + 1, center_column + 1).Font.ColorIndex = 1
+
+End Sub
+
+Sub pass_button_Click()
+    
+    'カウントを1つ送る
+    stone_count = stone_count + 1
+    '手番を変更
+    turn (stone_count)
+    
+End Sub
+
+Sub cell_DoubleClick(ByVal Target As Range, Cancel As Boolean)
+    
+    Dim cell_click_row As Integer
+    Dim cell_click_column As Integer
+    cell_click_row = Target.Row
+    cell_click_column = Target.Column
+    
+    Dim stone_color As Integer
+    Dim reverse_color As String
+    
+    
+    '盤上か判定
+    If cell_click_row >= 3 And 8 >= cell_click_row And cell_click_column >= 3 And 8 >= cell_click_column Then
+        'セル内の編集モードをキャンセル
+        Cancel = True
+        
+        '石を置ける場所かどうか判定
+        If Cells(cell_click_row, cell_click_column).Value = "" Then
+    
+            '置く石の色を選択
+            If stone_count Mod 2 = 1 Then
+                stone_color = BLACK_Color
+                reverse_color = WHITE_Color
+            Else
+                stone_color = WHITE_Color
+                reverse_color = BLACK_Color
+            End If
+            
+            If change_check(cell_click_row, cell_click_column, stone_color, reverse_color) = True Then
+                '石を置く
+                Cells(cell_click_row, cell_click_column).Value = stone
+                Cells(cell_click_row, cell_click_column).Font.ColorIndex = stone_color
+                stone_count = stone_count + 1
+ 
+            Else
+                MsgBox "裏返す石がないので置くことができません。"
+            End If
+            
+        Else
+            MsgBox "すでに石が置かれています。"
+        End If
+        
+        '手番交代
+        turn (stone_count)
+        count (1)
+        
+    End If
+End Sub
+
+'手番を調べる
+Function turn(turn_count)
+    
+    If stone_count Mod 2 = 1 Then
+        Cells(4, 11).Font.ColorIndex = BLACK_Color
+    Else
+        Cells(4, 11).Font.ColorIndex = WHITE_Color
+    End If
+
+End Function
+'マスをカウント
+Function count(con)
+    
+    Dim BLACK_Count As Integer
+    Dim WHITE_Count As Integer
+    
+    'マスの数をカウント
+    For i = 0 To 5
+        For j = 0 To 5
+            If Cells(top + i, left + j).Value = stone Then
+                If Cells(top + i, left + j).Font.ColorIndex = BLACK_Color Then
+                    BLACK_Count = BLACK_Count + 1
+                End If
+                If Cells(top + i, left + j).Font.ColorIndex = WHITE_Color Then
+                    WHITE_Count = WHITE_Count + 1
+                End If
+            End If
+        Next
+    Next
+    
+    Cells(5, 11).Value = BLACK_Count
+    Cells(6, 11).Value = WHITE_Count
+    
+End Function
+
+Function left_change_check(cell_row, cell_column, stone_color, reverse_color)
+  Dim check_result As Boolean
+  check_result = False
+  
+  If cell_column - 2 >= left Then
+    
+    If Cells(cell_row, cell_column - 1).Font.ColorIndex <> stone_color And Cells(cell_row, cell_column - 1).Value = stone Then
+        
+        'マスを裏返せるかの判定
+        i = cell_column - 2
+        Do While i >= left
+            
+            If Cells(cell_row, i).Font.ColorIndex = stone_color And Cells(cell_row, i).Value = stone Then
+                check_result = True
+                Exit Do
+            End If
+            
+            If Cells(cell_row, i).Value = "" Then
+                Exit Do
+            End If
+            
+            i = i - 1
+        Loop
+        
+        'マスを裏返す
+        i = cell_column - 1
+        If check_result = True Then
+        
+            Do While i >= left
+            
+                If Cells(cell_row, i).Value = "" Or Cells(cell_row, i).Font.ColorIndex = stone_color Then
+                    Exit Do
+                End If
+                
+                Cells(cell_row, i).Font.ColorIndex = stone_color
+                Cells(cell_row, i).Value = stone
+                
+                i = i - 1
+            Loop
+        End If
+      
+    End If
+  End If
+  left_change_check = check_result
+End Function
+
+Function right_change_check(cell_row, cell_column, stone_color, reverse_color)
+    Dim check_result As Boolean
+    check_result = False
+  
+    If cell_column + 2 <= left + 5 Then
+        If Cells(cell_row, cell_column + 1).Font.ColorIndex <> stone_color And Cells(cell_row, cell_column + 1).Value = stone Then
+      
+        'マスを裏返せるかの判定
+        i = cell_column + 2
+        Do While i <= left + 5
+        
+            If Cells(cell_row, i).Value = "" Then
+                Exit Do
+            End If
+        
+            If Cells(cell_row, i).Font.ColorIndex = stone_color And Cells(cell_row, i).Value = stone Then
+                check_result = True
+                Exit Do
+            End If
+            i = i + 1
+        Loop
+      
+        'マスを裏返す
+        i = cell_column + 1
+        If check_result = True Then
+        
+            Do While i <= left + 5
+                If Cells(cell_row, i).Value = "" Or Cells(cell_row, i).Font.ColorIndex = stone_color Then
+                    Exit Do
+                End If
+                
+                Cells(cell_row, i).Font.ColorIndex = stone_color
+                Cells(cell_row, i).Value = stone
+            
+                i = i + 1
+            Loop
+        End If
+      
+    End If
+  End If
+  right_change_check = check_result
+End Function
+
+Function up_change_check(cell_row, cell_column, stone_color, reverse_color)
+    Dim check_result As Boolean
+    check_result = False
+  
+    If cell_row - 2 >= top Then
+        If Cells(cell_row - 1, cell_column).Font.ColorIndex <> stone_color And Cells(cell_row - 1, cell_column).Value = stone Then
+            'マスを裏返せるかの判定
+            i = cell_row - 2
+            Do While i >= top
+                If Cells(i, cell_column).Font.ColorIndex = stone_color And Cells(i, cell_column).Value = stone Then
+                    check_result = True
+                    Exit Do
+                End If
+  
+                If Cells(i, cell_column).Value = "" Then
+                    Exit Do
+                End If
+  
+                i = i - 1
+            Loop
+      
+            'マスを裏返す
+            i = cell_row - 1
+            If check_result = True Then
+        
+                Do While i >= top
+                    If Cells(i, cell_column).Value = "" Or Cells(i, cell_column).Font.ColorIndex = stone_color Then
+                        Exit Do
+                    End If
+                
+                    Cells(i, cell_column).Font.ColorIndex = stone_color
+                    Cells(i, cell_column).Value = stone
+            
+                    i = i - 1
+                Loop
+            End If
+      
+        End If
+    End If
+  
+    up_change_check = check_result
+End Function
+
+Function down_change_check(cell_row, cell_column, stone_color, reverse_color)
+    Dim check_result As Boolean
+    check_result = False
+  
+    If cell_row + 2 <= top + 5 Then
+        If Cells(cell_row + 1, cell_column).Font.ColorIndex <> stone_color And Cells(cell_row + 1, cell_column).Value = stone Then
+            
+            'マスを裏返せるかの判定
+            i = cell_row + 2
+            Do While i <= top + 5
+                If Cells(i, cell_column).Font.ColorIndex = stone_color And Cells(i, cell_column).Value = stone Then
+                    check_result = True
+                    Exit Do
+                End If
+  
+                If Cells(i, cell_column).Value = "" Then
+                    Exit Do
+                End If
+  
+                i = i + 1
+            Loop
+            
+            'マスを裏返す
+            i = cell_row + 1
+            If check_result = True Then
+        
+                Do While i <= top + 5
+                    If Cells(i, cell_column).Value = "" Or Cells(i, cell_column).Font.ColorIndex = stone_color Then
+                        Exit Do
+                    End If
+                
+                    Cells(i, cell_column).Font.ColorIndex = stone_color
+                    Cells(i, cell_column).Value = stone
+            
+                    i = i + 1
+                Loop
+            End If
+            
+        End If
+    End If
+  
+  down_change_check = check_result
+End Function
+
+Function left_up_change_check(cell_row, cell_column, stone_color, reverse_color)
+    Dim check_result As Boolean
+    check_result = False
+ 
+    If cell_column - 2 >= left And cell_row - 2 >= top Then
+        If Cells(cell_row - 1, cell_column - 1).Font.ColorIndex <> stone_color And Cells(cell_row - 1, cell_column - 1).Value = stone Then
+            
+            'マスを裏返せるかの判定
+            i = cell_column - 2
+            j = cell_row - 2
+ 
+            Do While i >= left And j >= top
+                If Cells(j, i).Font.ColorIndex = stone_color And Cells(j, i).Value = stone Then
+                    check_result = True
+                    Exit Do
+                End If
+ 
+                If Cells(j, i).Value = "" Then
+                    Exit Do
+                End If
+ 
+                i = i - 1
+                j = j - 1
+            Loop
+            
+            'マスを裏返す
+            i = cell_column - 1
+            j = cell_row - 1
+            
+            If check_result = True Then
+        
+                Do While i >= left And j >= top
+                    If Cells(j, i).Value = "" Or Cells(j, i).Font.ColorIndex = stone_color Then
+                        Exit Do
+                    End If
+                
+                    Cells(j, i).Font.ColorIndex = stone_color
+                    Cells(j, i).Value = stone
+            
+                    i = i - 1
+                    j = j - 1
+                Loop
+            End If
+            
+            
+        End If
+    End If
+ 
+    left_up_change_check = check_result
+ 
+End Function
+
+Function left_down_change_check(cell_row, cell_column, stone_color, reverse_color)
+    Dim check_result As Boolean
+    check_result = False
+  
+    If cell_column - 2 >= left And cell_row + 2 <= top + 5 Then
+        If Cells(cell_row + 1, cell_column - 1).Font.ColorIndex <> stone_color And Cells(cell_row + 1, cell_column - 1).Value = stone Then
+            
+            'マスを裏返せるかの判定
+            i = cell_column - 2
+            j = cell_row + 2
+ 
+            Do While i >= left And j <= top + 5
+            
+                If Cells(j, i).Font.ColorIndex = stone_color And Cells(j, i).Value = stone Then
+                    check_result = True
+                    Exit Do
+                End If
+               
+                If Cells(j, i).Value = "" Then
+                    Exit Do
+                End If
+ 
+                i = i - 1
+                j = j + 1
+            Loop
+            
+            'マスを裏返す
+            i = cell_column - 1
+            j = cell_row + 1
+            
+            If check_result = True Then
+        
+                Do While i >= left And j <= top + 5
+                    If Cells(j, i).Value = "" Or Cells(j, i).Font.ColorIndex = stone_color Then
+                        Exit Do
+                    End If
+                
+                    Cells(j, i).Font.ColorIndex = stone_color
+                    Cells(j, i).Value = stone
+            
+                    i = i - 1
+                    j = j + 1
+                Loop
+            End If
+            
+        End If
+    End If
+  
+    left_down_change_check = check_result
+End Function
+
+Function right_up_change_check(cell_row, cell_column, stone_color, reverse_color)
+    Dim check_result As Boolean
+    check_result = False
+ 
+    If cell_column + 2 <= left + 5 And cell_row - 2 >= top Then
+        If Cells(cell_row - 1, cell_column + 1).Font.ColorIndex <> stone_color And Cells(cell_row - 1, cell_column + 1).Value = stone Then
+        
+            'マスを裏返せるかの判定
+            i = cell_column + 2
+            j = cell_row - 2
+  
+            Do While i <= left + 5 And j >= top
+                If Cells(j, i).Font.ColorIndex = stone_color And Cells(j, i).Value = stone Then
+                    check_result = True
+                    Exit Do
+                End If
+  
+                If Cells(j, i).Value = "" Then
+                    Exit Do
+                End If
+ 
+                i = i + 1
+                j = j - 1
+            Loop
+            
+            'マスを裏返す
+            i = cell_column + 1
+            j = cell_row - 1
+            
+            If check_result = True Then
+        
+                Do While i <= left + 5 And j >= top
+                    If Cells(j, i).Value = "" Or Cells(j, i).Font.ColorIndex = stone_color Then
+                        Exit Do
+                    End If
+                
+                    Cells(j, i).Font.ColorIndex = stone_color
+                    Cells(j, i).Value = stone
+            
+                    i = i + 1
+                    j = j - 1
+                Loop
+            End If
+            
+        End If
+    End If
+    right_up_change_check = check_result
+End Function
+
+Function right_down_change_check(cell_row, cell_column, stone_color, reverse_color)
+    Dim check_result As Boolean
+    check_result = False
+ 
+    If cell_column + 2 <= left + 5 And cell_row + 2 <= top + 5 Then
+        If Cells(cell_row + 1, cell_column + 1).Font.ColorIndex <> stone_color And Cells(cell_row + 1, cell_column + 1).Value = stone Then
+            
+            'マスを裏返せるかの判定
+            i = cell_column + 2
+            j = cell_row + 2
+ 
+            Do While i <= left + 5 And j <= top + 5
+                If Cells(j, i).Font.ColorIndex = stone_color And Cells(j, i).Value = stone Then
+                    check_result = True
+                    Exit Do
+                End If
+ 
+                If Cells(j, i).Value = "" Then
+                    Exit Do
+                End If
+ 
+                i = i + 1
+                j = j + 1
+            Loop
+            
+            'マスを裏返す
+            i = cell_column + 1
+            j = cell_row + 1
+            
+            If check_result = True Then
+        
+                Do While i <= left + 5 And j <= top + 5
+                    If Cells(j, i).Value = "" Or Cells(j, i).Font.ColorIndex = stone_color Then
+                        Exit Do
+                    End If
+                
+                    Cells(j, i).Font.ColorIndex = stone_color
+                    Cells(j, i).Value = stone
+            
+                    i = i + 1
+                    j = j + 1
+                Loop
+            End If
+            
+        End If
+    End If
+ 
+    right_down_change_check = check_result
+End Function
+
+Function change_check(cell_row, cell_column, stone_color, reverse_color)
+    check_result = False
+ 
+    If left_change_check(cell_row, cell_column, stone_color, reverse_color) = True Or _
+        right_change_check(cell_row, cell_column, stone_color, reverse_color) = True Or _
+        up_change_check(cell_row, cell_column, stone_color, reverse_color) = True Or _
+        down_change_check(cell_row, cell_column, stone_color, reverse_color) = True Or _
+        left_up_change_check(cell_row, cell_column, stone_color, reverse_color) = True Or _
+        right_up_change_check(cell_row, cell_column, stone_color, reverse_color) = True Or _
+        left_down_change_check(cell_row, cell_column, stone_color, reverse_color) = True Or _
+        right_down_change_check(cell_row, cell_column, stone_color, reverse_color) = True Then
+ 
+        check_result = True
+    End If
+ 
+    change_check = check_result
+End Function
