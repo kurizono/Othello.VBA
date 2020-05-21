@@ -1,0 +1,3 @@
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    Call Othello.cell_DoubleClick(Target, Cancel)
+End Sub
